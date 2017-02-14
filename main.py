@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import math
+import random
 
 from Dijkstra import Dijkst
 
@@ -27,63 +28,92 @@ def printCars(cars):
         print "%s: %s, %s: %s, %s: %s, %s: %s," % (printNode(i+1),printCar(cars[i]),printNode(i+2),printCar(cars[i+1]),printNode(i+3),printCar(cars[i+2]),printNode(i+4),printCar(cars[i+3]))
     print "%s: %s, %s: %s" % (printNode(57),printCar(cars[56]),printNode(58),printCar(cars[57]))
 
-def calcWei(RA,RB,RV):
-    n    = 58
+def fillWei(RA,RB,RV):
+    n = 58
     wei = np.zeros((n,n),dtype=float)
     for i in range(len(RA)):
         wei[RA[i]-1,RB[i]-1] = RV[i]
     return wei
 
-def updateWij(RomeA, RomeB, Wij, WijOrig, cars):
-    for i in range(len(Wij)):
-        Wij[i] = WijOrig[i] + XI * ((cars[RomeA[i]-1] + cars[RomeB[i]-1])/2)
-
-def RomeSimulate(RomeA, RomeB, Wij, WijOrig, cars):
+def updateWij(RomeA, RomeB, wei, weiZeroth, cars):
+    for n in range(len(RomeA)):
+        i = RomeA[n]-1
+        j = RomeB[n]-1
+        wei[i,j] = weiZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2 ) )
+        
+def RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars):
     #find optimal route for each node to node dest
-    dWij = calcWei(RomeA, RomeB, Wij)
     nextNode = np.zeros(shape=58)
     for i in range(len(nextNode)):
         if i == 51:
             continue
-        nextNode[i] = Dijkst(i,51,dWij)[1]
+        nextNode[i] = Dijkst(i,51,wei)[1]
     #move 70% caars accordingly, rest stay <- calc 0.7 of num. floor. do cars-num, add num to optimal node
-    #print "Next Node", nextNode[12]
+    #print "et", nextNode[40]
     copyCars = np.copy(cars)
     for i in range(len(nextNode)):
-        moving = int(math.floor(copyCars[i] * 0.7))
-        #if moving != 0:
-        #print moving
+        if i == 51:
+            continue
+        carsAtNode = copyCars[i]
+        if carsAtNode == 1:
+            if random.uniform(0.0, 1.0) <= 0.7:
+                moving = 1
+            else:
+                moving = 0
+        else:
+            moving = int(math.floor(carsAtNode * 0.7))            
         cars[i] -= moving
         cars[int(nextNode[i])] += moving
     #calc 60% of cars at node 52, floor. node 52 - num.
-    cars[51] -= int(math.floor(0.4 * cars[51]))
+    carsAt51 = cars[51]
+    if carsAt51 == 1:
+        if random.uniform(0.0, 1.0) <= 0.4:
+            leave = 1
+        else:
+            leave = 0
+    else:
+        leave = carsAt51 - math.floor(0.6 * carsAt51)            
+    cars[51] -= leave
     #update wij
-    updateWij(RomeA, RomeB, Wij, WijOrig, cars)
+    oldwij = np.copy(wei)
+    updateWij(RomeA, RomeB, wei, weiZeroth, cars)
+    from functools import reduce
+    product = (oldwij == wei).all()
+    print "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", product 
     return
 
 if __name__ == "__main__":
     RomeA = np.empty(0,dtype=int)
     RomeB = np.empty(0,dtype=int)
-    Wij = np.empty(0,dtype=float)
-    WijOrig = np.empty(0,dtype=float)
+    RomeV = np.empty(0,dtype=float)
     with open('RomeEdges','r') as file:
         AAA = csv.reader(file)
         for row in AAA:
             RomeA = np.concatenate((RomeA,[int(row[0])]))
             RomeB = np.concatenate((RomeB,[int(row[1])]))
-            Wij = np.concatenate((Wij,[float(row[2])]))
-            WijOrig = np.concatenate((WijOrig,[float(row[2])]))
+            RomeV = np.concatenate((RomeV,[float(row[2])]))
     file.close()
 
     injectionPoint = 12 # St. Peter's Square
     destination = 51 # Coliseum
     cars = np.zeros(shape=58)
+    wei = fillWei(RomeA, RomeB, RomeV)
+    weiZeroth = np.copy(wei)
     print "Simulating Rome #Roger\nInitial state:"
     printCars(cars)
+    #print wei
     for i in range(200):
         if i < 180:
             cars[injectionPoint] += 20
         print "#############################################"
         print "Simulating iteration: ", i+1
-        RomeSimulate(RomeA, RomeB, Wij, WijOrig, cars)
+        RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars)
+        count = 0
+        nodes = []
+        for j in range(len(cars)):
+            if cars[j] != 0:
+                count += 1
+                nodes.append(j)
+        print "nodes in use", count, nodes
         printCars(cars)
+        print wei
