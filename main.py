@@ -6,6 +6,8 @@ import random
 from Dijkstra import Dijkst
 
 XI = 0.01
+RANGEEX51 = range(58)
+RANGEEX51.remove(51)
 
 class bcolors:
     HEADER = '\033[95m'
@@ -41,7 +43,7 @@ def updateWij(RomeA, RomeB, wei, weiZeroth, cars):
         j = RomeB[n]-1
         wei[i,j] = weiZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2 ) )
         
-def RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars):
+def RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars, nodeLoad):
     #find optimal route for each node to node dest
     nextNode = np.zeros(shape=58)
     for i in range(len(nextNode)):
@@ -51,29 +53,17 @@ def RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars):
     #move 70% caars accordingly, rest stay <- calc 0.7 of num. floor. do cars-num, add num to optimal node
     #print "et", nextNode[40]
     copyCars = np.copy(cars)
-    for i in range(len(nextNode)):
-        if i == 51:
-            continue
+    for i in RANGEEX51:
         carsAtNode = copyCars[i]
-        if carsAtNode == 1:
-            if random.uniform(0.0, 1.0) <= 0.7:
-                moving = 1
-            else:
-                moving = 0
-        else:
-            moving = int(math.floor(carsAtNode * 0.7))            
-        cars[i] -= moving
-        cars[int(nextNode[i])] += moving
-    #calc 60% of cars at node 52, floor. node 52 - num.
-    carsAt51 = cars[51]
-    if carsAt51 == 1:
-        if random.uniform(0.0, 1.0) <= 0.4:
-            leave = 1
-        else:
-            leave = 0
-    else:
-        leave = carsAt51 - math.floor(0.6 * carsAt51)            
-    cars[51] -= leave
+        nodeLoad[i] = max(nodeLoad[i], carsAtNode)
+        oldCars = cars[i]
+        cars[i] = math.floor(oldCars - 0.7 * carsAtNode)
+        carsMoved = oldCars - cars[i]
+        cars[int(nextNode[i])] += carsMoved
+
+    #Node 52. 60% of cars stay.
+    cars[51] = math.floor(0.6 * cars[51])
+    nodeLoad[51] = max(nodeLoad[51], cars[51])
     #update wij
     oldwij = np.copy(wei)
     updateWij(RomeA, RomeB, wei, weiZeroth, cars)
@@ -97,6 +87,7 @@ if __name__ == "__main__":
     injectionPoint = 12 # St. Peter's Square
     destination = 51 # Coliseum
     cars = np.zeros(shape=58)
+    nodeLoad = np.zeros(shape=58)
     wei = fillWei(RomeA, RomeB, RomeV)
     weiZeroth = np.copy(wei)
     print "Simulating Rome #Roger\nInitial state:"
@@ -107,7 +98,7 @@ if __name__ == "__main__":
             cars[injectionPoint] += 20
         print "#############################################"
         print "Simulating iteration: ", i+1
-        RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars)
+        RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars, nodeLoad)
         count = 0
         nodes = []
         for j in range(len(cars)):
@@ -117,3 +108,4 @@ if __name__ == "__main__":
         print "nodes in use", count, nodes
         printCars(cars)
         print wei
+    printCars(nodeLoad)
