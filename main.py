@@ -117,8 +117,8 @@ if __name__ == "__main__":
         print "#############################################"
         print "Simulating iteration: ", i+1
         RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars, nodeLoad)
-        count = 0
-        nodes = []
+        #count = 0
+        #nodes = []
         #for j in range(len(cars)):
         #    if cars[j] != 0:
         #        count += 1
