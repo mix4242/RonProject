@@ -3,31 +3,20 @@ import csv
 import math
 import random
 
-from Dijkstra import Dijkst, calcWei
+from Dijkstra import Dijkst
 
 XI = 0.10
 NUMNODES = 58
 RANGEEX51 = range(NUMNODES)
 RANGEEX51.remove(51)
 
-class bcolors:
-    #Define special character sequences as colors to be used.
-    #Work only on Unix
-    OKGREEN = '\033[92m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-
 def printNode(node):
-    #Wraps node number in color
-    return bcolors.OKGREEN + str(node) + bcolors.ENDC
+    return str(node)
 
 def printCar(car):
-    #Wraps car number in color
-    return bcolors.BOLD + bcolors.FAIL + str(car) + bcolors.ENDC
-
+    return str(car)
+    
 def printCars(cars):
-    #Prints out the cars at each node in a concise, shorter format of 4 colums
     columnCars = len(cars)-2
     for i in range(0, columnCars, 4):
         print "%s: %s, %s: %s, %s: %s, %s: %s," % (printNode(i+1),printCar(cars[i]),printNode(i+2),printCar(cars[i+1]),printNode(i+3),printCar(cars[i+2]),printNode(i+4),printCar(cars[i+3]))
@@ -48,14 +37,12 @@ def updateWij(RomeA, RomeB, wei, weiZeroth, cars):
 
 nextNode = np.zeros(shape=58)
 def RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars, nodeLoad):
-    #find optimal route for each node to node dest
     global nextNode
     for i in range(len(nextNode)):
         if i == 51:
             continue
         nextNode[i] = int(Dijkst(i,51,wei)[1])
 
-    #Node 52. 60% of cars stay.
     carsAt51 = cars[51]
     nodeLoad[51] = max(nodeLoad[51], carsAt51)
     cars[51] = math.floor(0.6 * carsAt51)
@@ -70,7 +57,6 @@ def RomeSimulate(RomeA, RomeB, wei, weiZeroth, cars, nodeLoad):
         carsMoved = oldCars - carsLeft
         cars[int(nextNode[i])] += carsMoved
     
-    #update wij
     updateWij(RomeA, RomeB, wei, weiZeroth, cars)
     return
 
@@ -82,15 +68,7 @@ def blockNode30(weiZeroth):
     weiZeroth[29, 20] = 9999
 
 if __name__ == "__main__":
-    RomeX = np.empty(0,dtype=float)
-    RomeY = np.empty(0,dtype=float)
-    with open('RomeVertices','r') as file:
-        AAA = csv.reader(file)
-        for row in AAA:
-            RomeX = np.concatenate((RomeX,[float(row[1])]))
-            RomeY = np.concatenate((RomeY,[float(row[2])]))
-    file.close()
-
+ 
     RomeA = np.empty(0,dtype=int)
     RomeB = np.empty(0,dtype=int)
     RomeV = np.empty(0,dtype=float)
@@ -102,12 +80,11 @@ if __name__ == "__main__":
             RomeV = np.concatenate((RomeV,[float(row[2])]))
     file.close()
 
-    injectionPoint = 12 # St. Peter's Square
-    destination = 51 # Coliseum
+    injectionPoint = 12
+    destination = 51
     cars = np.zeros(shape=58)
     nodeLoad = np.zeros(shape=58)
-    #wei = fillWei(RomeA, RomeB, RomeV)
-    wei = calcWei(RomeX, RomeY, RomeA, RomeB, RomeV)
+    wei = fillWei(RomeA, RomeB, RomeV)
     weiZeroth = np.copy(wei)
 
     #blockNode30(weiZeroth)
