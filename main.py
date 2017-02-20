@@ -9,7 +9,6 @@ XI = 0.10
 NUMNODES = 58
 START = 12 # St. Peter's Square
 END = 51 # Coliseum
-RANGENODES = range(NUMNODES)
 RANGEEXEND = range(NUMNODES)
 RANGEEXEND.remove(END) #Range of nodes, without the END node
 
