@@ -38,7 +38,7 @@ def printCars(cars):
 
 def updateWij(RomeA, RomeB, wij, wijZeroth, cars):
     #Updates the weights according to the given formula
-    for n in RANGENODES:
+    for n in range(len(RomeA)):
         i = RomeA[n]-1
         j = RomeB[n]-1
         wij[i,j] = wijZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2 ) )
@@ -71,12 +71,12 @@ def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
 
 #This method sets the weights of outgoing edges of node 30 to 9999
 #This means node will never be used
-def blockNode30(weiZeroth):
-    weiZeroth[29, 25] = 9999
-    weiZeroth[29, 34] = 9999
-    weiZeroth[29, 42] = 9999
-    weiZeroth[29, 44] = 9999
-    weiZeroth[29, 20] = 9999
+def blockNode30(wijZeroth):
+    wijZeroth[29, 25] = 9999
+    wijZeroth[29, 34] = 9999
+    wijZeroth[29, 42] = 9999
+    wijZeroth[29, 44] = 9999
+    wijZeroth[29, 20] = 9999
 
 if __name__ == "__main__":
     #Get the x and y values of Romes' vertices
