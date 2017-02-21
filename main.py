@@ -1,11 +1,10 @@
 import numpy as np
 import csv
 import math
-import random
 
 from Dijkstra import Dijkst, calcWei
 
-XI = 0.10
+XI = 0.01
 NUMNODES = 58
 START = 12 # St. Peter's Square
 END = 51 # Coliseum
@@ -40,7 +39,7 @@ def updateWij(RomeA, RomeB, wij, wijZeroth, cars):
     for n in range(len(RomeA)):
         i = RomeA[n]-1
         j = RomeB[n]-1
-        wij[i,j] = wijZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2 ) )
+        wij[i,j] = wijZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2))
 
 def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
     #find optimal route for each node to node END

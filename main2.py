@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     #blockNode30(weiZeroth)
 
-    print "Simulating Rome #Roger\nInitial state:"
+    print "Simulating Rome\nInitial state:"
     printCars(cars)
     for i in range(200):
         if i < 180:
