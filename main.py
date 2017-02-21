@@ -50,7 +50,7 @@ def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
     #Node END. 60% of cars stay.
     carsAtEND = cars[END]
     nodeLoad[END] = max(nodeLoad[END], carsAtEND)
-    cars[END] = math.floor(0.6 * carsAtEND)
+    cars[END] = round(0.6 * carsAtEND)
 
     #Move the cars at all other nodes except END
     copyCars = np.copy(cars)
@@ -58,7 +58,7 @@ def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
         carsAtNode = copyCars[i]
         nodeLoad[i] = max(nodeLoad[i], carsAtNode)
         oldCars = cars[i]
-        carsLeft = math.floor(oldCars - 0.7 * carsAtNode)
+        carsLeft = round(oldCars - 0.7 * carsAtNode)
         cars[i] = carsLeft
         carsMoved = oldCars - carsLeft
         cars[int(nextNode[i])] += carsMoved

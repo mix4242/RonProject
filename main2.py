@@ -4,6 +4,7 @@ import math
 import random
 
 from Dijkstra import Dijkst
+from Dijkstra import calcWei
 
 XI = 0.10
 NUMNODES = 58
@@ -68,7 +69,15 @@ def blockNode30(weiZeroth):
     weiZeroth[29, 20] = 9999
 
 if __name__ == "__main__":
- 
+    RomeX = np.empty(0,dtype=float)
+    RomeY = np.empty(0,dtype=float)
+    with open('RomeVertices','r') as file:
+        AAA = csv.reader(file)
+        for row in AAA:
+            RomeX = np.concatenate((RomeX,[float(row[1])]))
+            RomeY = np.concatenate((RomeY,[float(row[2])]))
+    file.close()
+    
     RomeA = np.empty(0,dtype=int)
     RomeB = np.empty(0,dtype=int)
     RomeV = np.empty(0,dtype=float)
@@ -84,7 +93,7 @@ if __name__ == "__main__":
     destination = 51
     cars = np.zeros(shape=58)
     nodeLoad = np.zeros(shape=58)
-    wei = fillWei(RomeA, RomeB, RomeV)
+    wei = calcWei(RomeX, RomeY, RomeA, RomeB, RomeV)
     weiZeroth = np.copy(wei)
 
     #blockNode30(weiZeroth)
