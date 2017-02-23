@@ -41,6 +41,17 @@ def updateWij(RomeA, RomeB, wij, wijZeroth, cars):
         j = RomeB[n]-1
         wij[i,j] = wijZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2))
 
+#generating a function which solely finds the next node as per Dijkstra
+#to use later to find unused edges
+def nextVertex(length, END, wij):
+    next_Vertex = np.zeros((length, 1))
+    THEedges = []
+    for i in range(length):
+        next_Vertex[i] = Dijkst(i, END, wij)[0]
+        edgeValue = int(nextNode[i])
+        THEedges.append((i+1, edgeValue+1))
+    return (next_Vertex, THEedges)
+
 def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
     #find optimal route for each node to node END
     for i in RANGEEXEND:
@@ -98,7 +109,17 @@ if __name__ == "__main__":
             RomeB = np.concatenate((RomeB,[int(row[1])]))
             RomeV = np.concatenate((RomeV,[float(row[2])]))
     file.close()
-
+    
+    #List of all the edges from RomeEdges
+    ALLedges = []
+    file_contents = open('RomeEdges', 'r')
+    for line in file_contents:
+        line_info = line.split()
+        firstVertex = int(line_info[0].split(',',1)[0])
+        secondVertex = int(line_info[1].split(',',1)[0])
+        ALLedges.append((firstVertex, secondVertex))
+    file_contents.close() 
+    
     #Initialize arrays
     cars = np.zeros(shape=NUMNODES)
     nodeLoad = np.zeros(shape=NUMNODES)
@@ -110,7 +131,7 @@ if __name__ == "__main__":
 
     #blockNode30(wijZeroth)
 
-    print "Simulating Rome\nInitial state:"
+    #print "Simulating Rome\nInitial state:"
     printCars(cars)
     for i in range(200):
         if i < 180:
@@ -119,7 +140,11 @@ if __name__ == "__main__":
         print "Simulating iteration: ", i+1
         RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode)
         printCars(cars)
+        USEDedges = nextVertex(len(cars), END, wij)[1]
         
     print "Maximum Node Load:"
     #We can use same func for printing cars to print the load for each node
     printCars(nodeLoad)
+    #prints number of unused edges
+    ans = list(set(ALLedges) - set(USEDedges))
+    print len(ans)
