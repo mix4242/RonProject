@@ -127,5 +127,10 @@ if __name__ == "__main__":
     print "Maximum Node Load:"
     #We can use same func for printing cars to print the load for each node
     printCars(nodeLoad)
+    
+    #Calculating the top 5 most congested nodes
+    MostCongestedNodes = nodeLoad.argsort()[-5:][::-1]+1
+    print 'Top Five Most Congested Edges:', MostCongestedNodes
+    
     #prints number of unused edges
-    print np.count_nonzero(usedEdges)
+    print 'Number of unused edges:', np.count_nonzero(usedEdges)
