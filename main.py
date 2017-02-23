@@ -41,11 +41,12 @@ def updateWij(RomeA, RomeB, wij, wijZeroth, cars):
         j = RomeB[n]-1
         wij[i,j] = wijZeroth[i,j] + (XI * ((cars[i] + cars[j]) / 2))
 
-def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
+def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode, unusedEdges):
     #find optimal route for each node to node END
     for i in RANGEEXEND:
         #The 1st elem of the returned array is next node to travel to
         nextNode[i] = int(Dijkst(i,END,wij)[1])
+        #setting unused edges to zero
         if cars[i] != 0:
             unusedEdges[i, nextNode[i]] = 0
 
@@ -64,8 +65,6 @@ def RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode):
         cars[i] = carsLeft
         carsMoved = oldCars - carsLeft
         cars[int(nextNode[i])] += carsMoved
-        #if carsMoved > 0:
-            #usedEdges[i,int(nextNode[i])] = 0
     
     #update wij
     updateWij(RomeA, RomeB, wij, wijZeroth, cars)
@@ -92,6 +91,7 @@ if __name__ == "__main__":
     file.close()
 
     #Get the edge values and initial weight values of Romes' edges
+    unusedEdges = np.zeros(shape=(NUMNODES, NUMNODES))
     RomeA = np.empty(0,dtype=int)
     RomeB = np.empty(0,dtype=int)
     RomeV = np.empty(0,dtype=float)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         for row in AAA:
             RomeA = np.concatenate((RomeA,[int(row[0])]))
             RomeB = np.concatenate((RomeB,[int(row[1])]))
-            #usedEdges[int(row[0])-1, int(row[1])-1] = 1
+            unusedEdges[int(row[0])-1, int(row[1])-1] = 1
             RomeV = np.concatenate((RomeV,[float(row[2])]))
     file.close()
     
@@ -108,12 +108,12 @@ if __name__ == "__main__":
     cars = np.zeros(shape=NUMNODES)
     nodeLoad = np.zeros(shape=NUMNODES)
     nextNode = np.zeros(shape=NUMNODES)
-    unusedEdges = np.ones((NUMNODES, NUMNODES))
 
     #Calculate initial weights of edges
     wij = calcWei(RomeX, RomeY, RomeA, RomeB, RomeV)
     wijZeroth = np.copy(wij)
 
+    #comment or uncomment as required
     #blockNode30(wijZeroth)
 
     #print "Simulating Rome\nInitial state:"
@@ -123,19 +123,15 @@ if __name__ == "__main__":
             cars[START] += 20
         print "#############################################"
         print "Simulating iteration: ", i+1
-        RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode)
+        RomeSimulate(RomeA, RomeB, wij, wijZeroth, cars, nodeLoad, nextNode, unusedEdges)
         printCars(cars)
     
     #calculating unused edges using nested for loops
-    edges = []
-    for i in range(NUMNODES):
-        for j in range(NUMNODES):
-            if wij[i,j] == 0:
-                unusedEdges[i,j] = 0
+    notUsedEdges = []
     for i in range(NUMNODES):
         for j in range(NUMNODES):
             if unusedEdges[i,j] == 1:
-                edges.append([i+1,j+1])
+                notUsedEdges.append([i+1,j+1])
             
     #We can use same func for printing cars to print the load for each node
     print "Maximum Node Load:"
@@ -146,5 +142,5 @@ if __name__ == "__main__":
     print 'Top Five Most Congested Edges:', MostCongestedNodes
     
     #print the unused edges and the number of them
-    print 'List of Unused Edges:', unusedEdges
+    print 'List of Unused Edges:', notUsedEdges
     print 'Number of Unused Edges:', np.sum(unusedEdges)
