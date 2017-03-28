@@ -2,8 +2,68 @@
 
 import numpy as np
 import sys
+import plotly
+import plotly.plotly as py
+import plotly.figure_factory as ff
 
-INFWEIGHT = 100000
+INFWEIGHT = 999
+
+def ModBellmanFord(ist, isp, wij):
+    #  ist:    index of starting node
+    #  isp:    index of stopping node
+    #  wei:    adjacency matrix (V x V)
+    #  shpath: shortest path
+
+    V = wij.shape[1]
+
+    # step 1: initialization
+    Inf = sys.maxint
+    d = np.ones(V, float) * np.inf
+    p = np.zeros(V, int) * Inf
+    d[ist] = 0
+
+    # step 2: iterative relaxation
+    for i in range(0, V-1):
+        for u in range(0, V):
+            for v in range(0, V):
+                w = wij[u, v]
+                if w != INFWEIGHT:
+                    if d[u]+w < d[v]:
+                        d[v] = d[u] + w
+                        p[v] = u
+
+    # step 3: check for negative-weight cycles
+    for u in range(0, V):
+        for v in range(0, V):
+            w = wij[u, v]
+            if w != INFWEIGHT:
+                if d[u]+w < d[v]:
+                    print('graph contains a negative-weight cycle')
+
+    # step 4: determine the shortest path
+    shpath = [isp]
+    while p[isp] != ist:
+        shpath.append(p[isp])
+        isp = p[isp]
+    shpath.append(ist)
+
+    return shpath[::-1]
+
+## Takes time in minutes and returns in analogue form, after 9am
+def toHrsMins(mins):
+    minutes = mins % 60
+    hours = mins / 60
+    return str(hours+9) + ":" + ("0" if minutes < 10 else "") + str(minutes) + ":00"
+
+## Prints the Gantt graph as a HTML5 document
+def printGantt(jobs):
+    df = []
+    for i in range(len(jobs)):
+        job = dict(Task="Job " + str(i), Start='2009-01-01 ' + toHrsMins(jobs[i][0]) , Finish='2009-01-01 ' + toHrsMins(jobs[i][1]))
+        df.append(job)
+
+    fig = ff.create_gantt(df)
+    plotly.offline.plot(fig, filename='gantt-simple-gantt-chart.html')
 
 def createWij(dependencies, durations):
     ## Create a weight matrix, I have generalised it for any network, 
@@ -29,102 +89,95 @@ def createWij(dependencies, durations):
 
     return wij
 
-def amendWei(weights, l_path):
-    weights_copy = np.copy(weights)
+def updateWij(wij, longest_path):
+    weights_copy = np.copy(wij)
     m = len(weights_copy)
-    evens = [x for x in l_path if x % 2 == 0]
+
+    ## Get all the End Nodes of the longest path jobs
+    evens = [x for x in longest_path if x % 2 == 0]
     for i in evens:
         if (np.count_nonzero(weights_copy[i, :]) == m - 1) and (np.count_nonzero(weights_copy[:, i-1]) >= m - 2):
             weights_copy[i, m-1] = INFWEIGHT
-            j = l_path.index(i)
+            ## Find first occurance of End Node
+            j = longest_path.index(i)
             if j >= 2:
-                a = l_path[j-2]
-                b = l_path[j-1]
+                a = longest_path[j-2]
+                b = longest_path[j-1]
                 weights_copy[a, b] = INFWEIGHT
         if np.count_nonzero(weights_copy[i, :]) == m - 1:
-            j = l_path.index(i)
+            ## Find first occurance of End Node
+            j = longest_path.index(i)
             if j >= 2:
-                a = l_path[j-2]
-                b = l_path[j-1]
+                a = longest_path[j-2]
+                b = longest_path[j-1]
                 weights_copy[a, b] = INFWEIGHT
     return weights_copy
 
-def BellmanFord(ist, isp, wei):
-    #  ist:    index of starting node
-    #  isp:    index of stopping node
-    #  wei:    adjacency matrix (V x V)
-    #  shpath: shortest path
-
-    V = wei.shape[1]
-
-    # step 1: initialization
-    Inf = sys.maxint
-    d = np.ones(V, float) * np.inf
-    p = np.zeros(V, int) * Inf
-    d[ist] = 0
-
-    # step 2: iterative relaxation
-    for i in range(0, V-1):
-        for u in range(0, V):
-            for v in range(0, V):
-                w = wei[u, v]
-                if w != INFWEIGHT:
-                    if d[u]+w < d[v]:
-                        d[v] = d[u] + w
-                        p[v] = u
-
-    # step 3: check for negative-weight cycles
-    for u in range(0, V):
-        for v in range(0, V):
-            w = wei[u, v]
-            if w != INFWEIGHT:
-                if d[u]+w < d[v]:
-                    print('graph contains a negative-weight cycle')
-
-    # step 4: determine the shortest path
-    shpath = [isp]
-    while p[isp] != ist:
-        shpath.append(p[isp])
-        isp = p[isp]
-    shpath.append(ist)
-
-    return shpath[::-1]
-
 if __name__ == '__main__':
-    #indices of starting and stopping node respectively
-    ist = 0
-    isp = 27
+    ## Virtual Start and End nodes
+    VSN = 0
+    VEN = 27
 
-    #set input variables for createWei
+    ## Initialize longest path array
+    longest_path = []
+
+    ## Set up dependencies and job durations as per question
     dependencies = np.array([[0, 1], [0, 7], [0, 10], [1, 4], [1, 12], [2, 3], [5, 7], [6, 5], [6, 9], [9, 11], [10, 12]])
     duration = np.array((41, 51, 50, 36, 38, 45, 21, 32, 32, 49, 30, 19, 26))
 
-    #create weight matrix
-    wei = createWij(dependencies, duration)
+    wij = createWij(dependencies, duration)
 
-    #initialise array of longest paths
-    lpath_full = []
+    ## Find the first longest path using our modified BellamanFord function
+    longest_path.append(ModBellmanFord(VSN, VEN, wij))
 
-    #use modified BellamanFord to generate longest path
-    lpath_full.append(BellmanFord(ist, isp, wei))
-
-    for i in range(50):
-        wei_new = amendWei(wei, lpath_full[i])
-        lpath_full.append(BellmanFord(ist, isp, wei_new))
-        wei = np.copy(wei_new)
-        if lpath_full[i+1] == [0, 27]:
+    while True:
+        last_path = len(longest_path)-1
+        wij_new = updateWij(wij, longest_path[last_path])
+        next_path = ModBellmanFord(VSN, VEN, wij_new)
+        if next_path == [0,27]:
+            ## If the longest path doesnt include any 'real' nodes, break out
             break
+        longest_path.append(next_path)
+        wij = np.copy(wij_new)
     
-    del lpath_full[len(lpath_full)-1]
-    print(lpath_full)
+    print(longest_path)
 
-    for i in range(len(lpath_full)):
-        del lpath_full[i][0]
-        del lpath_full[i][len(lpath_full[i])-1]
-        for j in range(0, len(lpath_full[i]), 2):
-            x = lpath_full[i][j]
-            lpath_full[i][j] = (x-1) / 2
-            lpath_full[i][j+1] = -1
-        lpath_full[i] = [item for item in lpath_full[i] if item != -1]
-    print(lpath_full)
+    ## Logic for turning longest paths into list of jobs
+    for i in range(len(longest_path)):
+        ## Remove the Virtual Start/End Nodes from the list
+        del longest_path[i][0]
+        del longest_path[i][len(longest_path[i])-1]
 
+        ## Take the first index and turn it into job number, set second to -1 to be deleted later
+        for j in range(0, len(longest_path[i]), 2):
+            x = longest_path[i][j]
+            longest_path[i][j] = (x-1) / 2
+            longest_path[i][j+1] = -1
+
+        ## Delete all -1's
+        longest_path[i] = [item for item in longest_path[i] if item != -1]
+    
+    #print(longest_path)
+    longest_path.reverse()
+
+    ## Initialize new job times variable, set all start/end times to 0
+    job_times = []
+    for i in range(len(duration)):
+        job_times.append([0, 0])
+
+    for i in range(len(longest_path)):
+        ## The collective run time is set to 0 for every job path
+        run_time = 0
+        for j in range(len(longest_path[i])):
+            job = longest_path[i][j]
+            job_times[job][0] = run_time
+            run_time += duration[job]
+            job_times[job][1] = run_time
+    
+    ## Print all the nodes' start and end times
+    print ("Node: Start - End")
+    for i in range(len(job_times)):
+        print ("%d: %d - %d" % (i, job_times[i][0], job_times[i][1]))
+    
+    ## Create Gantt graph
+    printGantt(job_times)
